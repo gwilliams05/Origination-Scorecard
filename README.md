@@ -1,2 +1,2 @@
-# Behavioural Scorecard
+# Origination Scorecard
 Logit reg PD Model
