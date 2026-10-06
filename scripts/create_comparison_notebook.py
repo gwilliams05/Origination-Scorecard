@@ -1,22 +1,31 @@
-from pathlib import Path
+"""Build and execute the candidate-model comparison notebook."""
+
 import contextlib
 import io
+from pathlib import Path
+
 import nbformat
 
 root = Path(__file__).resolve().parents[1]
 cells = []
 
-def section(title, code):
+
+def section(title: str, code: str) -> None:
     cells.append(nbformat.v4.new_markdown_cell(title))
     cells.append(nbformat.v4.new_code_cell(code.strip()))
 
-cells.append(nbformat.v4.new_markdown_cell('''# Candidate model comparison
+
+cells.append(
+    nbformat.v4.new_markdown_cell("""# Candidate model comparison
 
 Refit seven candidate specifications on the same in-sample accounts and evaluate them on the same out-of-sample accounts. All scaling, category definitions and Delphi bucket boundaries come from training data. The reduced specification is fixed to the six previously selected terms; selection is not repeated.
 
-**Lower Brier score and training AIC are better. Higher AUC and Gini are better.** AIC describes the training fit and is not an out-of-sample metric. This notebook recomputes comparable results, which can differ from historic results if those used different accounts. Exploring several models on the holdout makes it a model-comparison sample rather than a fresh final validation set.'''))
+**Lower Brier score and training AIC are better. Higher AUC and Gini are better.** AIC describes the training fit and is not an out-of-sample metric. This notebook recomputes comparable results, which can differ from historic results if those used different accounts. Exploring several models on the holdout makes it a model-comparison sample rather than a fresh final validation set.""")
+)
 
-section('## Cell 1 — Import libraries and open both datasets', '''
+section(
+    "## Cell 1 — Import libraries and open both datasets",
+    """
 from pathlib import Path
 import numpy as np
 import pandas as pd
@@ -38,9 +47,12 @@ kgb_in_sample = pd.read_csv(data_dir / "KGB in sample.csv")
 kgb_out_sample = pd.read_csv(data_dir / "KGB out sample.csv")
 target = "target_bad"
 print(f"Loaded {len(kgb_in_sample):,} in-sample and {len(kgb_out_sample):,} out-of-sample accounts.")
-''')
+""",
+)
 
-section('## Cell 2 — Define inputs and establish common comparison samples', '''
+section(
+    "## Cell 2 — Define inputs and establish common comparison samples",
+    """
 application_numeric = [
     "age_at_application", "employment_tenure_months",
     "time_at_address_months", "household_size", "dependants",
@@ -95,9 +107,12 @@ display(pd.DataFrame([
      "Bads": int(rows[target].sum()), "Bad rate": rows[target].mean()}
     for name, rows in [("In-sample", train), ("Out-of-sample", test)]
 ]).style.format({"Bad rate": "{:.2%}"}))
-''')
+""",
+)
 
-section('## Cell 3 — Create the three derived variables', '''
+section(
+    "## Cell 3 — Create the three derived variables",
+    """
 for rows in [train, test]:
     rows["low_disposable_income_flag"] = (rows["disposable_income"] < 150).astype(float)
     rows["log_address_tenure"] = np.log1p(rows["time_at_address_months"])
@@ -111,9 +126,12 @@ derived = [
     "employment_address_instability_count",
 ]
 display(train[derived].head())
-''')
+""",
+)
 
-section('## Cell 4 — Build matching training and validation matrices', '''
+section(
+    "## Cell 4 — Build matching training and validation matrices",
+    """
 def make_matrices(numeric, categorical=(), unscaled=()):
     a = pd.DataFrame({"const": 1.0}, index=train.index)
     b = pd.DataFrame({"const": 1.0}, index=test.index)
@@ -179,9 +197,12 @@ candidate_matrices = {
         with_delphi=True, with_derived=True
     ),
 }
-''')
+""",
+)
 
-section('## Cell 5 — Fit every candidate on training data and calculate metrics', '''
+section(
+    "## Cell 5 — Fit every candidate on training data and calculate metrics",
+    """
 def remove_dependent_terms(a, b):
     # Remove exact dependencies, such as duplicate search counts and the
     # disposable-income identity. Apply the same retained columns to test.
@@ -230,9 +251,12 @@ for name, (a, b) in candidate_matrices.items():
         print(f"  Removed dependent terms: {', '.join(removed)}")
 
 comparison_table = pd.DataFrame(results).set_index("Model")
-''')
+""",
+)
 
-section('## Cell 6 — Display the comparison table', '''
+section(
+    "## Cell 6 — Display the comparison table",
+    """
 print("Lower Brier and AIC are better. Higher AUC and Gini are better.")
 print("All models use the same training accounts and the same validation accounts.")
 
@@ -245,34 +269,47 @@ display(comparison_table.style.format(formatting))
 
 # Optional export:
 # comparison_table.to_csv(data_dir / "candidate_model_comparison.csv")
-''')
+""",
+)
+
+
+def make_display_capture(cell_outputs: list) -> object:
+    """Return a display callback bound to one notebook cell's output list."""
+
+    def capture_display(value: object) -> None:
+        data = {"text/plain": str(value)}
+        if hasattr(value, "to_html"):
+            data["text/html"] = value.to_html()
+        cell_outputs.append(nbformat.v4.new_output("display_data", data=data))
+
+    return capture_display
+
 
 notebook = nbformat.v4.new_notebook(cells=cells)
-notebook.metadata['kernelspec'] = {'display_name': 'Python 3', 'language': 'python', 'name': 'python3'}
-notebook.metadata['language_info'] = {'name': 'python'}
-env = {'__name__': '__main__'}
+notebook.metadata["kernelspec"] = {
+    "display_name": "Python 3",
+    "language": "python",
+    "name": "python3",
+}
+notebook.metadata["language_info"] = {"name": "python"}
+env = {"__name__": "__main__"}
 count = 0
 for cell in notebook.cells:
-    if cell.cell_type != 'code':
+    if cell.cell_type != "code":
         continue
     count += 1
     outputs = []
-    def capture_display(value):
-        data = {'text/plain': str(value)}
-        if hasattr(value, 'to_html'):
-            data['text/html'] = value.to_html()
-        outputs.append(nbformat.v4.new_output('display_data', data=data))
     stream = io.StringIO()
     with contextlib.redirect_stdout(stream):
-        exec(compile(cell.source, f'<comparison cell {count}>', 'exec'), env)
-    env['display'] = capture_display
+        exec(compile(cell.source, f"<comparison cell {count}>", "exec"), env)
+    env["display"] = make_display_capture(outputs)
     if stream.getvalue():
-        outputs.insert(0, nbformat.v4.new_output('stream', name='stdout', text=stream.getvalue()))
+        outputs.insert(0, nbformat.v4.new_output("stream", name="stdout", text=stream.getvalue()))
     cell.execution_count = count
     cell.outputs = outputs
-    print(f'Completed cell {count}', flush=True)
+    print(f"Completed cell {count}", flush=True)
 nbformat.validate(notebook)
-output = root / 'notebooks/11_Model_Comparison.ipynb'
+output = root / "notebooks/11_Model_Comparison.ipynb"
 nbformat.write(notebook, output)
-print(env['comparison_table'].to_string(), flush=True)
-print(f'Saved {output}', flush=True)
+print(env["comparison_table"].to_string(), flush=True)
+print(f"Saved {output}", flush=True)

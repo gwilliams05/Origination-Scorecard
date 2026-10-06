@@ -18,3 +18,29 @@ dependencies = [
 [tool.uv]
 package = false
 
+[dependency-groups]
+dev = [
+    "pytest>=9.1.1",
+    "ruff>=0.16.10",
+]
+
+[tool.pytest.ini_options]
+addopts = "-ra"
+pythonpath = ["src"]
+testpaths = ["tests"]
+
+[tool.ruff]
+extend-exclude = ["data", "notebooks"]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = [
+    "B",   # flake8-bugbear: likely bugs and design problems
+    "E4",  # pycodestyle: imports
+    "E7",  # pycodestyle: statements
+    "E9",  # pycodestyle: runtime errors
+    "F",   # Pyflakes
+    "I",   # isort-compatible import ordering
+    "UP",  # pyupgrade: modern Python syntax
+]

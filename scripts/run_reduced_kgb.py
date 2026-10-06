@@ -1,4 +1,5 @@
 """Fit the reduced KGB model with Delphi and the three derived variables."""
+
 from pathlib import Path
 
 import numpy as np
@@ -9,22 +10,33 @@ from sklearn.metrics import brier_score_loss, log_loss, roc_auc_score, roc_curve
 # Works from either the project folder or its notebooks folder.
 relative = Path("data") / "KGB Modelling"
 root = next(
-    (p for p in [Path.cwd(), *Path.cwd().parents]
-     if (p / relative / "KGB in sample.csv").is_file()),
+    (
+        p
+        for p in [Path.cwd(), *Path.cwd().parents]
+        if (p / relative / "KGB in sample.csv").is_file()
+    ),
     None,
 )
 if root is None:
     raise FileNotFoundError("Cannot locate the KGB sample files.")
 
 numeric = [
-    "committed_monthly_outgoings", "debt_to_income_ratio",
-    "recent_application_count", "revolving_utilisation", "historic_defaults",
+    "committed_monthly_outgoings",
+    "debt_to_income_ratio",
+    "recent_application_count",
+    "revolving_utilisation",
+    "historic_defaults",
     "DelphiScore",
 ]
 required = [
-    "target_bad", "loan_purpose", *numeric, "disposable_income",
-    "time_at_address_months", "employment_tenure_months",
+    "target_bad",
+    "loan_purpose",
+    *numeric,
+    "disposable_income",
+    "time_at_address_months",
+    "employment_tenure_months",
 ]
+
 
 def load_sample(filename):
     data = pd.read_csv(root / relative / filename)
@@ -39,11 +51,11 @@ def load_sample(filename):
         raise ValueError(f"{filename}: tenure cannot be negative.")
     rows["low_disposable_income_flag"] = (rows["disposable_income"] < 150).astype(float)
     rows["log_address_tenure"] = np.log1p(rows["time_at_address_months"])
-    rows["employment_address_instability_count"] = (
-        (rows["employment_tenure_months"] < 12).astype(float)
-        + (rows["time_at_address_months"] < 12).astype(float)
-    )
+    rows["employment_address_instability_count"] = (rows["employment_tenure_months"] < 12).astype(
+        float
+    ) + (rows["time_at_address_months"] < 12).astype(float)
     return rows
+
 
 train = load_sample("KGB in sample.csv")
 test = load_sample("KGB out sample.csv")
@@ -55,6 +67,7 @@ stds = train[scaled].std(ddof=0)
 if (stds == 0).any():
     raise ValueError("A training predictor has no variation.")
 
+
 def design_matrix(rows):
     design = (rows[scaled] - means) / stds
     design.insert(0, "const", 1.0)
@@ -62,6 +75,7 @@ def design_matrix(rows):
         design[column] = rows[column]
     design["loan_purpose=education"] = (rows["loan_purpose"] == "education").astype(float)
     return design.astype(float)
+
 
 X_train, X_test = design_matrix(train), design_matrix(test)
 y_train, y_test = train["target_bad"].astype(int), test["target_bad"].astype(int)
@@ -75,6 +89,7 @@ if not np.isfinite(model.params).all() or not np.isfinite(model.bse).all():
     raise RuntimeError("Invalid coefficients or standard errors.")
 
 train_pd, test_pd = model.predict(X_train), model.predict(X_test)
+
 
 def performance(actual, probability):
     auc = roc_auc_score(actual, probability)
@@ -90,10 +105,13 @@ def performance(actual, probability):
         "Log loss": log_loss(actual, probability),
     }
 
-results = pd.DataFrame({
-    "In-sample": performance(y_train, train_pd),
-    "Out-of-sample": performance(y_test, test_pd),
-})
+
+results = pd.DataFrame(
+    {
+        "In-sample": performance(y_train, train_pd),
+        "Out-of-sample": performance(y_test, test_pd),
+    }
+)
 print("\nREDUCED MODEL + DELPHI + DERIVED VARIABLES")
 print(results.to_string(float_format=lambda value: f"{value:.4f}"))
 print(f"\nTraining AIC: {model.aic:.2f}")
