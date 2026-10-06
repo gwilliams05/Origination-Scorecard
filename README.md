@@ -70,5 +70,5 @@ uv run ruff format .
   data to avoid leakage.
 - Use deterministic random seeds for generated data and model experiments.
 - Never use fabricated personal identifiers as model predictors.
-- Run Ruff and pytest before committing. Generated datasets and notebooks are excluded
-  from linting so checks remain focused on maintained Python source.
+- Run Ruff and pytest before committing. Ruff checks and formats Python source in both
+  modules and notebook code cells; generated datasets remain excluded.

@@ -49,7 +49,12 @@ def _write_notebook(path: Path, title: str, cells: list[dict]) -> None:
         ]
         + cells,
         "metadata": {
-            "kernelspec": {"display_name": "Python 3", "language": "python", "name": "python3"}
+            "kernelspec": {
+                "display_name": "Python 3",
+                "language": "python",
+                "name": "python3",
+            },
+            "language_info": {"name": "python"},
         },
         "nbformat": 4,
         "nbformat_minor": 5,
@@ -59,9 +64,6 @@ def _write_notebook(path: Path, title: str, cells: list[dict]) -> None:
 
 
 def build_notebooks() -> None:
-    generator_source = (PROJECT_ROOT / "src" / "origination_scorecard" / "generator.py").read_text(
-        encoding="utf-8"
-    )
     generator_cells = [
         _markdown(
             "## How to use this notebook\n\nRun cells in order with **Shift+Enter**. Change the settings below to create a different, reproducible portfolio."
@@ -71,9 +73,11 @@ def build_notebooks() -> None:
             "n_accounts = 10_000\nrandom_seed = 20_260_907\ntarget_known_bad_rate = 0.04\ntarget_inferred_rate = 0.02\nbroken_link_rate = 0.01"
         ),
         _markdown(
-            "## Data-generation code\n\nThe complete generator is included below so its assumptions and transformations can be inspected and changed within the notebook. Run this cell before building the datasets."
+            "## Data-generation code\n\nThe generator is imported from the maintained package under `src/`, keeping this notebook aligned with the tested implementation."
         ),
-        _code(generator_source),
+        _code(
+            'import sys\n\nsource_directory = str(PROJECT_ROOT / "src")\nif source_directory not in sys.path:\n    sys.path.insert(0, source_directory)\n\nfrom origination_scorecard import (  # noqa: E402\n    GeneratorConfig,\n    generate_project_data,\n    write_project_data,\n)'
+        ),
         _code(
             "config = GeneratorConfig(n_accounts=n_accounts, random_seed=random_seed, target_known_bad_rate=target_known_bad_rate, target_inferred_rate=target_inferred_rate, broken_link_rate=broken_link_rate)\noutputs = generate_project_data(config)\nwrite_project_data(outputs, PROJECT_ROOT)\n{name: frame.shape for name, frame in outputs.items()}"
         ),
@@ -93,7 +97,7 @@ def build_notebooks() -> None:
             "## Notebook basics\n\nA notebook contains text and executable code cells. Run one cell at a time with **Shift+Enter**. Restart the kernel and run all cells when you want to confirm that the work is reproducible."
         ),
         _code(
-            "from pathlib import Path\nimport pandas as pd\nimport numpy as np\nimport matplotlib.pyplot as plt\nfrom sklearn.linear_model import LogisticRegression\nfrom sklearn.metrics import roc_auc_score\n\n"
+            "from pathlib import Path\n\nimport pandas as pd\n\n"
             + ROOT_FINDER
             + "\nDATA_DIR = PROJECT_ROOT / 'data'"
         ),
