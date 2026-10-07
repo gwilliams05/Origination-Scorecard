@@ -1,6 +1,5 @@
 """Structural quality checks for the complete notebook sequence."""
 
-import re
 from pathlib import Path
 
 import nbformat
@@ -8,21 +7,19 @@ import pytest
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 NOTEBOOK_DIRECTORY = PROJECT_ROOT / "notebooks"
-NUMBER_PATTERN = re.compile(r"^(\d{2})")
-
-
 def notebook_paths() -> list[Path]:
     return sorted(NOTEBOOK_DIRECTORY.glob("*.ipynb"))
 
 
 def test_notebook_sequence_is_complete_and_unique() -> None:
-    numbers = [
-        int(match.group(1))
-        for path in notebook_paths()
-        if (match := NUMBER_PATTERN.match(path.name)) is not None
+    expected_names = [
+        "01_sample_generation.ipynb",
+        "02_KGB_model.ipynb",
+        "03_KIGB_model.ipynb",
+        "04_TTD_testing.ipynb",
     ]
 
-    assert numbers == list(range(1, 18))
+    assert [path.name for path in notebook_paths()] == expected_names
 
 
 @pytest.mark.parametrize("path", notebook_paths(), ids=lambda path: path.stem)
