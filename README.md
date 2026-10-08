@@ -95,7 +95,21 @@ The calibration gap indicated that the model was not sufficiently reliable for a
 | Manual review | 2.50% to below 3.50% | 582.8–592.8 | Refer to an underwriter |
 | Auto decline | 3.50% or above | Below 582.8 | Decline, subject to policy requirements |
 
-In the TTD sample using the policy assigned and assuming a 80% Underwriter accuracy:
+### Final results notebook
+
+`05_final_results.ipynb` consolidates the final model and policy results across the development, chronological Out and through-the-door (TTD) samples. It reloads the three samples, refits the selected seven-term logistic-regression model on the development data, applies the confirmed 2.50% and 3.50% probability thresholds, and estimates the policy outcomes assuming 80% underwriting accuracy. Under that assumption, an underwriter correctly accepts 80% of reviewed good applicants and correctly declines 80% of reviewed bad applicants.
+
+| Sample | Accounts | Assumed underwriting accuracy | Observed bad rate | Calibration gap | Auto accept rate | Manual review rate | Auto decline rate | Expected approval rate | Expected accepted bad rate | Expected good decline rate | Expected bad capture rate |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| Development | 7,405 | 80% | 3.97% | +0.00% | 17.2% | 33.7% | 49.1% | 43.6% | 1.24% | 52.9% | 86.3% |
+| Out | 2,508 | 80% | 4.07% | +0.24% | 18.3% | 34.4% | 47.2% | 45.2% | 1.09% | 51.2% | 87.8% |
+| TTD | 2,000 | 80% | 4.00% | +0.15% | 18.2% | 35.9% | 45.9% | 46.1% | 1.65% | 50.6% | 81.0% |
+
+The development sample is calibrated by construction. The positive calibration gaps of 0.24 percentage points on Out and 0.15 percentage points on TTD show modest underprediction of bad outcomes outside development. Policy allocation is reasonably stable across the samples: approximately 17–18% of applications are automatically accepted, 34–36% require manual review and 46–49% are automatically declined.
+
+With 80% underwriting accuracy, the expected approval rate is 44–46% and the expected accepted bad rate remains below the 2% target in all three samples. TTD is the most cautious indicator of forward performance: its expected accepted bad rate is 1.65% and its expected bad capture rate is 81.0%. The policy is conservative, however, because approximately half of all applicants are expected to be good applicants who are declined, while more than one-third require manual review. These results support the thresholds as an initial monitored policy, but the calibration, underwriting assumption and good-customer cost require validation with real application and outcome data.
+
+In the TTD sample using the policy assigned and assuming an 80% underwriter accuracy:
 
 |Review accuracy|DTI override|Applicants reviewed|Review rate|Incremental reviews from DTI|Expected accepted accounts|Expected approval rate|Expected accepted bads|Expected accepted bad rate|Expected good declines|Expected bads prevented|Accepted-bad cost|Review cost|Good-decline cost|Total scenario cost|
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
@@ -134,7 +148,8 @@ Origination-Scorecard/
 │   ├── 01_sample_generation.ipynb
 │   ├── 02_KGB_model.ipynb
 │   ├── 03_KIGB_model.ipynb
-│   └── 04_TTD_testing.ipynb
+│   ├── 04_TTD_testing.ipynb
+│   └── 05_final_results.ipynb
 ├── scripts/
 ├── src/origination_scorecard/
 ├── tests/
@@ -163,6 +178,7 @@ Run the notebooks in numerical order:
 2. `02_KGB_model.ipynb`
 3. `03_KIGB_model.ipynb`
 4. `04_TTD_testing.ipynb`
+5. `05_final_results.ipynb`
 
 To run the automated tests:
 
