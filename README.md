@@ -186,6 +186,8 @@ Take the KGB model log odds scoring system and use the three tiered decisioning 
 
 Monitor costs, ensure that underwriter decisions are recorded against using reason codes. This will help to define Underwriter accuracy over time, and to identify other variables that are key to decisioning.
 
+The model currently predicts, given the current assumptions, that it will produce a conservative bad rate on the book of less than the target: 2%. While the model is in its infancy, It is best to be conservative and monitor model drift over time. The conservative prediction gives the headroom, and means that the model and its policies can be adjusted over time once the realised results materialise to improve its ability to discuminate between goods and bads, without risking too many bads on the books in its infancy.
+
 Do not relax the thresholds or implement the DTI override as a mandatory rule until the model has been calibrated and independently validated using genuine application and performance data.
 
 ## Disclaimer
